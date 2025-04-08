@@ -1,23 +1,21 @@
-<img src="https://github.com/dmslabsbr/hoymiles/raw/master/oldStable/logo.png" alt="" width="200" />
+# HoyMiles Solar Data Gateway Add-on OldStable version
+Development versions can be unstable.
 
-
-# HoyMiles Solar Data Gateway Add-on
-Application to read Hoymiles Gateway Solar Data
-
-### OLD Stable Version
-
-In near future it will be removed!
+Application to read Hoymiles Gateway Solar Data using unofficial API
 
 I developed this program to integrate my solar system data to [Home Assistant](https://www.home-assistant.io/) Application through an add-on.
 
+Now, [Cosik](https://github.com/Cosik)  is helping too.
+
 [![Open your Home Assistant instance and show the add add-on repository dialog with a specific repository URL pre-filled.](https://my.home-assistant.io/badges/supervisor_add_addon_repository.svg)](https://my.home-assistant.io/redirect/supervisor_add_addon_repository/?repository_url=https%3A%2F%2Fgithub.com%2Fdmslabsbr%2Fhoymiles)
 
-But you can use the application without using the Home Assistant. You just need a machine that runs Python3.
+But you can use the application without using the Home Assistant. You just need a machine that runs Python3. It based on mqtt messages, so could be send from any device to MQTT Broker.
 
 <a href="https://www.buymeacoffee.com/dmslabs"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a pizza&emoji=🍕&slug=dmslabs&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"></a>
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9S3JYKPHR3XQ6)
-[![Donate with Bitcoin](https://en.cryptobadges.io/badge/micro/1MAC9RBnPYT9ua1zsgvhwfRoASTBKr4QL8)](https://www.blockchain.com/btc/address/1MAC9RBnPYT9ua1zsgvhwfRoASTBKr4QL8)
+
+Donate Cosik ->
+[![Donate Cosik](https://img.shields.io/badge/Donate-PayPal-green.svg)](paypal.me/cosik3d)
 
 <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/dmslabsbr/hoymiles">
 <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/dmslabsbr/hoymiles">
@@ -25,7 +23,7 @@ But you can use the application without using the Home Assistant. You just need 
 
 # Instructions
 
-<img align="center" src="https://github.com/dmslabsbr/hoymiles/raw/master/img/hass.io.png" alt="" width="30" /> [Home Assistant add-on instructions](DOCS.md)
+<img align="center" src="https://github.com/dmslabsbr/smsUps/raw/master/hass.io.png" alt="" width="30" /> [Home Assistant add-on instructions](DOCS.md)
 
 
 Before run you need to install:
@@ -38,15 +36,16 @@ git clone https://github.com/dmslabsbr/hoymiles.git
 cd hoymiles
 python3 -m venv ./hoymiles/
 source ./bin/activate
-pip3 install paho-mqtt
+pip3 install paho-mqtt==1.6.1
 pip3 install requests
+pip3 install python-dateutil
 ```
 
 My solar panels communicate with the internet using a DTU-W100 gateway.
 
-<img src="https://github.com/dmslabsbr/hoymiles/raw/master/img/dtu.png" alt="" width="300" />
+<img src="https://github.com/dmslabsbr/hoymiles/raw/master/img/icon.png" alt="" width="300" />
 
-But it will probably work with any device that uses the [global.hoymiles.com](https://global.hoymiles.com/) Website
+But it will probably work with any device that uses the [global.hoymiles.com](https://global.hoymiles.com/) Website. It was tested with DTU-PRO also.
 
 
 ## PS:

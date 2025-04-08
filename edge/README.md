@@ -1,4 +1,31 @@
+<!-- These are examples of badges you might want to add to your README:
+     please update the URLs accordingly
+
+[![Built Status](https://api.cirrus-ci.com/github/<USER>/hoymiles.svg?branch=main)](https://cirrus-ci.com/github/<USER>/hoymiles)
+[![ReadTheDocs](https://readthedocs.org/projects/hoymiles/badge/?version=latest)](https://hoymiles.readthedocs.io/en/stable/)
+[![Coveralls](https://img.shields.io/coveralls/github/<USER>/hoymiles/main.svg)](https://coveralls.io/r/<USER>/hoymiles)
+[![PyPI-Server](https://img.shields.io/pypi/v/hoymiles.svg)](https://pypi.org/project/hoymiles/)
+[![Conda-Forge](https://img.shields.io/conda/vn/conda-forge/hoymiles.svg)](https://anaconda.org/conda-forge/hoymiles)
+[![Monthly Downloads](https://pepy.tech/badge/hoymiles/month)](https://pepy.tech/project/hoymiles)
+[![Twitter](https://img.shields.io/twitter/url/http/shields.io.svg?style=social&label=Twitter)](https://twitter.com/hoymiles)
+-->
+
+[![Project generated with PyScaffold](https://img.shields.io/badge/-PyScaffold-005CA0?logo=pyscaffold)](https://pyscaffold.org/)
+
+
 # HoyMiles Solar Data Gateway Add-on Edge version
+
+# Branch in full full development mode - will be rewritten from scratch
+
+## Important Info
+
+Addon is in maintenance mode. This is FOSS (Free Open Source Software) and based on reverse engineering so it could not work always as expected. What is more due to techical dept present implementation loose possibility to add new features. This mean that it **required rewriting from scratch**. Without support from community it **is not predicted soon**.
+
+Br,
+Cosik.
+
+## Info
+
 Development versions can be unstable.
 
 Application to read Hoymiles Gateway Solar Data using unofficial API
@@ -11,10 +38,9 @@ Now, [Cosik](https://github.com/Cosik)  is helping too.
 
 But you can use the application without using the Home Assistant. You just need a machine that runs Python3. It based on mqtt messages, so could be send from any device to MQTT Broker.
 
-<a href="https://www.buymeacoffee.com/dmslabs"><img src="https://img.buymeacoffee.com/button-api/?text=Buy me a pizza&emoji=🍕&slug=dmslabs&button_colour=FFDD00&font_colour=000000&font_family=Cookie&outline_colour=000000&coffee_colour=ffffff"></a>
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=9S3JYKPHR3XQ6)
-[![Donate with Bitcoin](https://en.cryptobadges.io/badge/micro/1MAC9RBnPYT9ua1zsgvhwfRoASTBKr4QL8)](https://www.blockchain.com/btc/address/1MAC9RBnPYT9ua1zsgvhwfRoASTBKr4QL8)
+Donate Cosik ->
+[![Donate Cosik](https://img.shields.io/badge/Donate-PayPal-green.svg)](paypal.me/cosik3d)
 
 <img alt="Lines of code" src="https://img.shields.io/tokei/lines/github/dmslabsbr/hoymiles">
 <img alt="GitHub last commit" src="https://img.shields.io/github/last-commit/dmslabsbr/hoymiles">
@@ -35,7 +61,7 @@ git clone https://github.com/dmslabsbr/hoymiles.git
 cd hoymiles
 python3 -m venv ./hoymiles/
 source ./bin/activate
-pip3 install paho-mqtt
+pip3 install paho-mqtt==1.6.1
 pip3 install requests
 pip3 install python-dateutil
 ```
@@ -45,6 +71,25 @@ My solar panels communicate with the internet using a DTU-W100 gateway.
 <img src="https://github.com/dmslabsbr/hoymiles/raw/master/img/icon.png" alt="" width="300" />
 
 But it will probably work with any device that uses the [global.hoymiles.com](https://global.hoymiles.com/) Website. It was tested with DTU-PRO also.
+
+
+# Supported devies
+
+So far it is confirmed that addon support Hoymiles devices:
+- micro inverters
+- standard inverters
+- energy meters
+- bms (with some restrictions)
+- batteries (with some restrictions)
+- multiple instalattions
+
+## Restrictions
+
+Addon support batteries and bms. Present is support only two modes:
+- self consumption
+- force charge
+
+Due to technical dept there **is no feedback about enabled mode and set values.**
 
 
 ## PS:
