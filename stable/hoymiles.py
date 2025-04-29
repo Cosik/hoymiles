@@ -3,7 +3,7 @@ Main module of addon
 """
 
 __author__ = "dmslabs&Cosik"
-__version__ = "1.4.3"
+__version__ = "1.4.4"
 __app_name__ = "Hoymiles Gateway"
 
 import json
@@ -14,6 +14,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timedelta
+from errno import ESHLIBVERS
 from string import Template
 
 from const import (
@@ -407,6 +408,13 @@ def main() -> int:
             f"Using External MQTT Server: {str(config['External_MQTT_Server'])}"
         )
 
+    if int(config["POOLING_TIME"]) < 60:
+        GETDATA_INTERVAL = 60
+        HASS_INTERVAL = 60
+        logger.warning("Pooling time set to minimum 60 seconds")
+    else:
+        GETDATA_INTERVAL = int(config["POOLING_TIME"])
+        HASS_INTERVAL = int(config["POOLING_TIME"])
     job_list = []
 
     mqtt_h.start(config)
