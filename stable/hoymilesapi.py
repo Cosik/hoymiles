@@ -341,7 +341,9 @@ class Hoymiles(object):
                 solar_data["bms_power"] = reflux_data.get("bms_power")
                 solar_data["bms_soc"] = reflux_data.get("bms_soc")
 
-        del solar_data["reflux_station_data"]
+        if "reflux_station_data" in solar_data:
+            del solar_data["reflux_station_data"]
+        
         return solar_data
 
     def request_solar_data(self):
