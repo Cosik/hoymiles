@@ -4,14 +4,14 @@ Module contain consts and templates used in addon.
 
 import datetime
 
-BASE_URL = "https://previous.hoymiles.com/platform/api/gateway/"
-LOGIN_API = "iam/auth_login"
-USER_ME = "iam/user_me"
-GET_DATA_API = "pvm-data/data_count_station_real_data"
-GET_ALL_DEVICE_API = "pvm/station_select_device_of_tree"
-STATION_FIND = "pvm/station_find"
-DATA_FIND_DETAILS = "pvm-data/data_find_details"
-SETTING_BATTERY_CONFIG = "pvm/setting_battery_config"
+BASE_URL = "https://neapi.hoymiles.com"
+LOGIN_API = "/iam/pub/0/auth/login"
+USER_ME = "/iam/pub/0/user/user_me"
+GET_DATA_API = "/pvm-data/api/0/station/data/count_station_real_data"
+GET_ALL_DEVICE_API = "/pvm/api/0/station/select_device_of_tree"
+STATION_FIND = "/pvm/api/0/station/find"
+DATA_FIND_DETAILS = "/pvm/api/0/dev/micro/find"
+SETTING_BATTERY_CONFIG = "/pvm-ctl/api/0/dev/setting/write"
 
 
 HTTP_STATUS_CODE = {
@@ -88,18 +88,11 @@ PAYLOAD_DETAILS = """{
 """
 
 
-HEADER_LOGIN = {"Content-Type": "application/json;charset=UTF-8", "Cookie": ""}
+HEADER_LOGIN = {"Content-Type": "application/json"}
 
 HEADER_DATA = {
-    "Content-Type": "application/json;charset=UTF-8",
-    "Cache-Control": "no-cache",
-    "Host": "previous.hoymiles.com",
-    "Connection": "keep-alive",
+    "Content-Type": "application/json",
     "Accept": "application/json, text/plain, */*",
-    "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",  # pylint: disable=line-too-long
-    "Accept-Language": "pt-BR,pt;q=0.9,it-IT;q=0.8,it;q=0.7,es-ES;q=0.6,es;q=0.5,en-US;q=0.4,en;q=0.3",  # pylint: disable=line-too-long
-    "Cookie": "hm_token_language=en_us; ",
 }
 
 SECRETS = "secrets.ini"
