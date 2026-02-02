@@ -10,15 +10,12 @@ import re
 import sys
 import time
 import uuid
-from datetime import date, datetime
-from string import Template
+from datetime import datetime
 
 import requests
 
 from const import (
     BASE_URL,
-    COOKIE_EGG_SESS,
-    COOKIE_UID,
     GET_ALL_DEVICE_API,
     GET_DATA_API,
     HEADER_DATA,
@@ -26,11 +23,7 @@ from const import (
     HTTP_STATUS_CODE,
     LOCAL_TIMEZONE,
     LOGIN_API,
-    PAYLOAD_ID,
-    PAYLOAD_T1,
-    PAYLOAD_T2,
     STATION_FIND,
-    PAYLOAD_DETAILS,
     DATA_FIND_DETAILS,
     SETTING_BATTERY_CONFIG,
 )
@@ -154,10 +147,8 @@ class Hoymiles(object):
         pass_hex = pass_hash.hexdigest()
 
         ret = False
-        template = Template(PAYLOAD_T1)
-        payload = template.substitute(user=user, password=pass_hex)
-        header = HEADER_LOGIN
-        header["Cookie"] = COOKIE_UID + "; " + COOKIE_EGG_SESS
+        payload = json.dumps({"user_name": user, "password": pass_hex})
+        header = dict(HEADER_LOGIN)
         login, s_code = self.send_post_request(BASE_URL + LOGIN_API, header, payload)
         if s_code == 200:
             json_res = json.loads(login)
@@ -345,24 +336,20 @@ class Hoymiles(object):
         
         return solar_data
 
+    def _get_auth_header(self):
+        """Build header dict with Authorization token"""
+        header = dict(HEADER_DATA)
+        header["Authorization"] = self.connection.token
+        return header
+
     def request_solar_data(self):
         """Send request for solar data
 
         Returns:
             _type_: _description_
         """
-        template = Template(PAYLOAD_T2)
-        payload = template.substitute(sid=self.plant_id)
-
-        header = HEADER_DATA
-        header["Cookie"] = (
-            COOKIE_UID
-            + "; hm_token="
-            + self.connection.token
-            + "; Path=/; Domain=.previous.hoymiles.com;"
-            + f"Expires=Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
-            + "'"
-        )
+        payload = json.dumps({"sid": self.plant_id})
+        header = self._get_auth_header()
 
         solar = self.send_payload(GET_DATA_API, header, payload)
         if "status" in solar.keys():
@@ -423,17 +410,8 @@ class Hoymiles(object):
         Returns:
             _type_: _description_
         """
-        template = Template(PAYLOAD_ID)
-        payload = template.substitute(id=self.plant_id)
-        header = HEADER_DATA
-        header["Cookie"] = (
-            COOKIE_UID
-            + "; hm_token="
-            + self.connection.token
-            + "; Path=/; Domain=.previous.hoymiles.com;"
-            + f"Expires=Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
-            + "'"
-        )
+        payload = json.dumps({"id": self.plant_id})
+        header = self._get_auth_header()
         retv = self.send_payload(GET_ALL_DEVICE_API, header, payload)
 
         if type(retv) is dict:
@@ -483,17 +461,8 @@ class Hoymiles(object):
         Returns:
             bool: True/False
         """
-        template = Template(PAYLOAD_ID)
-        payload = template.substitute(id=self.plant_id)
-        header = HEADER_DATA
-        header["Cookie"] = (
-            COOKIE_UID
-            + "; hm_token="
-            + self.connection.token
-            + "; Path=/; Domain=.previous.hoymiles.com;"
-            + f"Expires=Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
-            + "'"
-        )
+        payload = json.dumps({"id": self.plant_id})
+        header = self._get_auth_header()
         retv = self.send_payload(STATION_FIND, header, payload)
         if "status" in retv.keys() and retv["status"] == "0":
             return True
@@ -502,23 +471,9 @@ class Hoymiles(object):
 
     def get_alarms(self):
         """_summary_"""
-        header = HEADER_DATA
-        header["Cookie"] = (
-            COOKIE_UID
-            + "; hm_token="
-            + self.connection.token
-            + "; Path=/; Domain=.previous.hoymiles.com;"
-            + f"Expires=Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
-            + "'"
-        )
+        header = self._get_auth_header()
         for micro in self.micro_list:
-            template = Template(PAYLOAD_DETAILS)
-            payload = template.substitute(
-                mi_id=micro.id,
-                mi_sn=micro.sn,
-                sid=self.plant_id,
-                time=datetime.now().strftime("%Y-%m-%d %H:%M"),
-            )
+            payload = json.dumps({"id": micro.id})
             retv = self.send_payload(DATA_FIND_DETAILS, header, payload)
             try:
                 if retv["data"]["warn_list"]:
@@ -563,28 +518,16 @@ class Hoymiles(object):
         return ""
 
     def set_bms_mode(self, mode: int, reserve_soc: int, max_power: int = 0):
-        payload = {
-            "ERROR_BACK": True,
-            "body": {
-                "mode": mode,
-                "data": {"reserve_soc": reserve_soc},
-                "sid": self.plant_id,
-            },
-            "WAITING_PROMISE": True,
+        payload_body = {
+            "mode": mode,
+            "data": {"reserve_soc": reserve_soc},
+            "sid": self.plant_id,
         }
         if max_power:
-            payload["body"]["data"]["max_power"] = max_power
+            payload_body["data"]["max_power"] = max_power
 
-        header = HEADER_DATA
-        header["Cookie"] = (
-            COOKIE_UID
-            + "; hm_token="
-            + self.connection.token
-            + "; Path=/; Domain=.previous.hoymiles.com;"
-            + f"Expires=Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
-            + "'"
-        )
+        header = self._get_auth_header()
 
         retv = self.send_payload(
-            SETTING_BATTERY_CONFIG, header, str(json.dumps(payload))
+            SETTING_BATTERY_CONFIG, header, json.dumps(payload_body)
         )
