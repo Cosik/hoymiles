@@ -5,17 +5,16 @@ Main API for Hoymiles
 import hashlib
 import json
 import logging
-from pyexpat.errors import messages
-import re
 import sys
 import time
 import uuid
 from datetime import datetime
 
 import requests
-
+from argon2.low_level import Type, hash_secret_raw
 from const import (
     BASE_URL,
+    DATA_FIND_DETAILS,
     GET_ALL_DEVICE_API,
     GET_DATA_API,
     HEADER_DATA,
@@ -23,9 +22,8 @@ from const import (
     HTTP_STATUS_CODE,
     LOCAL_TIMEZONE,
     LOGIN_API,
-    STATION_FIND,
-    DATA_FIND_DETAILS,
     SETTING_BATTERY_CONFIG,
+    STATION_FIND,
 )
 
 module_logger = logging.getLogger("HoymilesAdd-on.hoymilesapi")
@@ -98,76 +96,12 @@ class BMS(PlantObject):
         self.max_power = 80
 
 
-class Hoymiles(object):
-    """Class for getting data from S-Miles Cloud"""
+class RequestHandler(object):
+    """Class for handling API requests"""
 
-    data_dict = {"last_time": "", "load_time": "", "load_cnt": 0}
+    def __init__(self):
 
-    def __init__(self, plant_id, config, g_envios, tries=5, meter=False) -> None:
-        global BASE_URL
-        self.plant_id = plant_id
-        self.connection = ConnectionHM()
-        self._tries = tries
-        self.logger = logging.getLogger("HoymilesAdd-on.hoymilesapi.Hoymiles")
-        self.count_station_real_data = {}
-        self._config = config
-        self.g_envios = g_envios
-        self.solar_data = {}
-        self.load_cnt = 0
-        self.dtu_list = []
-        self.micro_list = []
-        self.bms_list = []
-        self.bms_present = False
-        self.meter = meter
-        self.uuid = str(uuid.uuid1())
-        if self._config.get("USE_ESTAR"):
-            BASE_URL = "https://monitor.estarpower.com/platform/api/gateway/"
-
-        cnt = 0
-        while True:
-            if not self.get_token():
-                self.logger.error("I can't get access token")
-                if cnt >= self._tries:
-                    exit()
-                time.sleep(60000)
-                cnt += 1
-            else:
-                break
-
-    def get_token(self) -> bool:
-        """Getter for token
-
-        Returns:
-            bool: Status of getting token operation
-        """
-        user = self._config["HOYMILES_USER"]
-        pass_hash = hashlib.md5(
-            self._config["HOYMILES_PASSWORD"].encode()
-        )  # b'senhadohoymiles'
-        pass_hex = pass_hash.hexdigest()
-
-        ret = False
-        payload = json.dumps({"user_name": user, "password": pass_hex})
-        header = dict(HEADER_LOGIN)
-        login, s_code = self.send_post_request(BASE_URL + LOGIN_API, header, payload)
-        if s_code == 200:
-            json_res = json.loads(login)
-            if json_res["status"] == "0":
-                self.connection.token = json_res["data"]["token"]
-                ret = True
-                self.logger.info("I got the token!!  :-)")
-                if not self.connection.token:
-                    self.logger.error("No response")
-                    ret = False
-            elif json_res["status"] == "1":
-                self.connection.token = ""
-                self.logger.error("Wrong user/password")
-        else:
-            self.connection.token = ""
-            self.logger.error(
-                f"Wrong user/password {s_code} {HTTP_STATUS_CODE.get(s_code, 1000)}"
-            )
-        return ret
+        self.logger = logging.getLogger("HoymilesAdd-on.hoymilesapi.RequestHandler")
 
     def send_post_request(self, url: str, header: dict, payload: str):
         """Send post API request
@@ -178,7 +112,7 @@ class Hoymiles(object):
             payload (str): payload
 
         Returns:
-            _type_: _description_s
+            _type_: _description_
         """
         return self.send_request(url, header, payload, rtype="POST")
 
@@ -232,6 +166,231 @@ class Hoymiles(object):
         except Exception as err:
             self.logger.error(err)
             return {}, -1
+
+    def send_payload(self, api: str, header: dict, payload: str) -> dict:
+        """Send api payload
+
+        Args:
+            api (str): part of api adress
+            header (dict): message header
+            payload (str): payload
+
+        Returns:
+            dict: _description_
+        """
+        # retv = self.pega_url_json_dic(BASE_URL + api, header, payload)
+        retv, s_code = self.send_request(BASE_URL + api, header, payload, "POST")
+        if s_code == 200:
+            try:
+                retv = json.loads(retv)
+                if "status" in retv.keys():
+                    if retv["status"] != "0":
+                        self.logger.debug(
+                            f"{api} Error: {retv['status']} {retv['message']}"
+                        )
+                        if retv["status"] == "100":
+                            # request new token
+                            if self.get_token():
+                                # chama pega solar novamente
+                                retv["status"], retv["data"] = self.request_solar_data()
+                        elif retv["status"] == "3":
+                            self.logger.error("Wrong plant id!!")
+                            sys.exit(0)
+                else:
+                    self.logger.error("I can't connect!")
+            except Exception:
+                self.logger.error(f"There was an error in retv {retv}")
+                return {}
+        return retv
+
+
+class ArgonToken(object):
+    """Class for handling argon2 token"""
+
+    def __init__(self) -> None:
+        self.logger = logging.getLogger("HoymilesAdd-on.hoymilesapi.ArgonToken")
+        self._request_handler = RequestHandler()
+
+    def compute_ch(self, password: str, a: str) -> str:
+        """Compute ch value for login
+
+        Returns:
+            str: ch value
+        """
+        salt = bytes.fromhex(a)
+
+        raw = hash_secret_raw(
+            secret=password.encode("utf-8"),
+            salt=salt,
+            time_cost=3,
+            memory_cost=32768,
+            parallelism=1,
+            hash_len=32,
+            type=Type.ID,
+        )
+
+        return raw.hex()
+
+    def pre_insp(self, user: str):
+        url = BASE_URL + "/iam/pub/3/auth/pre-insp"
+        header = dict(HEADER_LOGIN)
+        payload = json.dumps({"u": user})
+
+        content, status = self._request_handler.send_post_request(url, header, payload)
+        if status != 200:
+            return None
+
+        data = json.loads(content)
+        if data.get("status") != "0":
+            return None
+
+        return data.get("data")
+
+    def get_token(self, user, password) -> bool:
+        insp = self.pre_insp(user)
+        if insp is None:
+            return False, ""
+
+        n = insp.get("n")
+        a = insp.get("a")
+
+        if not n or not a:
+            self.logger.error("Failed to get n or a for token computation")
+            return False, ""
+        ch = self.compute_ch(password, a)
+
+        payload = json.dumps({"u": user, "ch": ch, "n": n})
+
+        header = dict(HEADER_LOGIN)
+        url = BASE_URL + "/iam/pub/3/auth/login"
+
+        content, status = self._request_handler.send_post_request(url, header, payload)
+        if status != 200:
+            self.logger.error("Login request failed")
+            return False, ""
+
+        data = json.loads(content)
+
+        if data.get("status") != "0":
+            self.logger.error(f"Login failed: {data.get('message')}")
+            return False
+
+        token = data["data"].get("token", "")
+        if not token:
+            self.logger.error("No token received")
+            return False, token
+        self.logger.info("I got the token!! :-)")
+        return True, token
+
+
+class LegacyToken(object):
+    def __init__(self) -> None:
+        self.logger = logging.getLogger("HoymilesAdd-on.hoymilesapi.LegacyToken")
+        self._request_handler = RequestHandler()
+
+    def get_token(self, user: str, password: str) -> bool:
+        """Getter for token
+
+        Returns:
+            bool: Status of getting token operation
+            token: token string
+        """
+        # user = self._config["HOYMILES_USER"]
+        pass_hash = hashlib.md5(password.encode())  # b'senhadohoymiles'
+        pass_hex = pass_hash.hexdigest()
+
+        ret = False
+        payload = json.dumps({"user_name": user, "password": pass_hex})
+        header = dict(HEADER_LOGIN)
+        login, s_code = self._request_handler.send_post_request(
+            BASE_URL + LOGIN_API, header, payload
+        )
+        if s_code == 200:
+            json_res = json.loads(login)
+            if json_res["status"] == "0":
+                token = json_res["data"]["token"]
+                ret = True
+                self.logger.info("I got the token!!  :-)")
+                if not token:
+                    self.logger.error("No response")
+                    ret = False
+            elif json_res["status"] == "1":
+                token = ""
+                self.logger.error("Wrong user/password")
+        else:
+            token = ""
+            self.logger.error(
+                f"Wrong user/password {s_code} {HTTP_STATUS_CODE.get(s_code, 1000)}"
+            )
+        return ret, token
+
+
+class Hoymiles(object):
+    """Class for getting data from S-Miles Cloud"""
+
+    data_dict = {"last_time": "", "load_time": "", "load_cnt": 0}
+
+    def __init__(self, plant_id, config, g_envios, tries=5, meter=False) -> None:
+        global BASE_URL
+        self.plant_id = plant_id
+        self.connection = ConnectionHM()
+        self._tries = tries
+        self.logger = logging.getLogger("HoymilesAdd-on.hoymilesapi.Hoymiles")
+        self.count_station_real_data = {}
+        self._config = config
+        self.g_envios = g_envios
+        self.solar_data = {}
+        self.load_cnt = 0
+        self.dtu_list = []
+        self.micro_list = []
+        self.bms_list = []
+        self.bms_present = False
+        self.meter = meter
+        self.uuid = str(uuid.uuid1())
+        if self._config.get("USE_ESTAR"):
+            BASE_URL = "https://monitor.estarpower.com/platform/api/gateway/"
+
+        cnt = 0
+        self._request_handler = RequestHandler()
+        while True:
+            status, self.connection.token = self.get_token()
+            if not status:
+                self.logger.error("I can't get access token")
+                if cnt >= self._tries:
+                    exit()
+                time.sleep(60000)
+                cnt += 1
+            else:
+                break
+
+    def send_payload(self, api: str, header: dict, payload: str) -> dict:
+        """Send api payload
+
+        Args:
+            api (str): part of api adress
+            header (dict): message header
+            payload (str): payload
+
+        Returns:
+            dict: _description_
+        """
+        return self._request_handler.send_payload(api, header, payload)
+
+    def get_token(self) -> bool:
+        """Getter for token
+
+        Returns:
+            bool: Status of getting token operation
+        """
+        status, token = LegacyToken().get_token(
+            self._config["HOYMILES_USER"], self._config["HOYMILES_PASSWORD"]
+        )
+        if status:
+            return True, token
+        
+        return ArgonToken().get_token(
+            self._config["HOYMILES_USER"], self._config["HOYMILES_PASSWORD"]
+        )
 
     def get_solar_data(self) -> dict:
         """Get solar data
@@ -333,7 +492,7 @@ class Hoymiles(object):
                 solar_data["bms_soc"] = reflux_data.get("bms_soc")
 
         solar_data.pop("reflux_station_data", None)
-        
+
         return solar_data
 
     def _get_auth_header(self):
@@ -418,42 +577,6 @@ class Hoymiles(object):
             if "status" in retv.keys():
                 return retv["status"], retv["data"]
         return "-1", {}
-
-    def send_payload(self, api: str, header: dict, payload: str) -> dict:
-        """Send api payload
-
-        Args:
-            api (str): part of api adress
-            header (dict): message header
-            payload (str): payload
-
-        Returns:
-            dict: _description_
-        """
-        # retv = self.pega_url_json_dic(BASE_URL + api, header, payload)
-        retv, s_code = self.send_request(BASE_URL + api, header, payload, "POST")
-        if s_code == 200:
-            try:
-                retv = json.loads(retv)
-                if "status" in retv.keys():
-                    if retv["status"] != "0":
-                        self.logger.debug(
-                            f"{api} Error: {retv['status']} {retv['message']}"
-                        )
-                        if retv["status"] == "100":
-                            # request new token
-                            if self.get_token():
-                                # chama pega solar novamente
-                                retv["status"], retv["data"] = self.request_solar_data()
-                        elif retv["status"] == "3":
-                            self.logger.error("Wrong plant id!!")
-                            sys.exit(0)
-                else:
-                    self.logger.error("I can't connect!")
-            except Exception as err:
-                self.logger.error(f"There was an error in retv {retv}")
-                return {}
-        return retv
 
     def verify_plant(self) -> bool:
         """Verify id user has access to plant

@@ -1,9 +1,16 @@
 # CHANGELOG
 
+## 1.4.8
+
+        - Additional support for getting Argon token.
+
+## 1.4.7
+
+        - Migrate to new API.
+
 ## 1.4.1
 
         - Revert way of generating uuid.
-
 
 ## 1.4
 
