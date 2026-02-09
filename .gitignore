@@ -141,3 +141,7 @@ dmypy.json
 .pyre/
 .DS_Store
 comm.json
+
+my.json
+
+.vscode/
