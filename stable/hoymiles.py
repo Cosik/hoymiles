@@ -487,6 +487,16 @@ def main() -> int:
                 mqtt_h=mqtt_h,
             )
         )
+        if config["Auto_update_token"]:
+            for plant in plant_list:
+                job_list.append(
+                    Job(
+                        interval=timedelta(seconds=72000), # 20h
+                        execute=plant.update_token,
+                        name="update_token",
+                    )
+                )
+
 
     for job in job_list:
         job.start()

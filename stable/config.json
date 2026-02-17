@@ -61,6 +61,7 @@
     "LOG_TO_FILE": "bool",
     "FILE_PATH": "str?",
     "USE_ESTAR": "bool",
-    "POOLING_TIME": "int?"
+    "POOLING_TIME": "int?",
+    "Auto_update_token": "bool"
   }
 }

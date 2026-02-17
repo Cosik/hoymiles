@@ -392,6 +392,18 @@ class Hoymiles(object):
             self._config["HOYMILES_USER"], self._config["HOYMILES_PASSWORD"]
         )
 
+    def update_token(self) -> bool:
+        """Update token in connection object
+
+        Returns:
+            bool: Status of getting token operation
+        """
+        status, token = self.get_token()
+        if status:
+            self.connection.token = token
+            return True
+        return False
+
     def get_solar_data(self) -> dict:
         """Get solar data
 
