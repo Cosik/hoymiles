@@ -43,7 +43,8 @@
     "LOG_TO_FILE": false,
     "FILE_PATH": "hoymiles.log",
     "USE_ESTAR": false,
-    "POOLING_TIME": "480"
+    "POOLING_TIME": "480",
+    "Auto_update_token": false
   },
   "schema": {
     "HOYMILES_USER": "str",
