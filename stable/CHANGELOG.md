@@ -1,5 +1,9 @@
 # CHANGELOG
 
+## 1.4.9
+
+        - Autorefresh token mechanism.
+
 ## 1.4.8
 
         - Additional support for getting Argon token.

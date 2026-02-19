@@ -382,13 +382,13 @@ class Hoymiles(object):
         Returns:
             bool: Status of getting token operation
         """
-        status, token = ArgonToken().get_token(
+        status, token = LegacyToken().get_token(
             self._config["HOYMILES_USER"], self._config["HOYMILES_PASSWORD"]
         )
         if status:
             return True, token
 
-        return LegacyToken().get_token(
+        return ArgonToken().get_token(
             self._config["HOYMILES_USER"], self._config["HOYMILES_PASSWORD"]
         )
 

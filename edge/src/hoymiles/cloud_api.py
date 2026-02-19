@@ -1,14 +1,11 @@
 import hashlib
 import logging
-from pyexpat.errors import messages
-from datetime import date, datetime
-from typing import Tuple
+from datetime import date
 from http.cookies import SimpleCookie
-
-from hoymiles.cloud_payloads import TokenBody, Payload, SidBody
-from dataclasses import asdict
+from typing import Tuple
 
 import requests
+from hoymiles.cloud_payloads import Payload, SidBody, TokenBody
 
 module_logger = logging.getLogger("HoymilesAdd-on.hoymilesapi")
 
@@ -38,7 +35,7 @@ HEADER_DATA = {
     "Connection": "keep-alive",
     "Accept": "application/json, text/plain, */*",
     "Accept-Encoding": "gzip, deflate, br",
-    "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 11_2_3) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.90 Safari/537.36",  # pylint: disable=line-too-long
+    "User-Agent": "Mozilla/5.0 (X11; Linux x86_64; rv:140.0) Gecko/20100101 Firefox/140.0",  # pylint: disable=line-too-long
     "Accept-Language": "pt-BR,pt;q=0.9,it-IT;q=0.8,it;q=0.7,es-ES;q=0.6,es;q=0.5,en-US;q=0.4,en;q=0.3",  # pylint: disable=line-too-long
 }
 
@@ -199,16 +196,16 @@ class CloudApi(object):
         if self._config.get("USE_ESTAR", False):
             self.cookies["estar_token"] = self.connection.token
             self.cookies["estar_token_language"] = "en_us"
-            self.cookies["estar_token"][
-                "Expires"
-            ] = f"Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
+            self.cookies["estar_token"]["Expires"] = (
+                f"Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
+            )
             self.cookies["estar_token"]["Domain"] = ".monitor.estarpower.com"
         else:
             self.cookies["hm_token"] = self.connection.token
             self.cookies["hm_token_language"] = "en_us"
-            self.cookies["hm_token"][
-                "Expires"
-            ] = f"Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
+            self.cookies["hm_token"]["Expires"] = (
+                f"Sat, 30 Mar {date.today().year + 1} 22:11:48 GMT;"
+            )
             self.cookies["hm_token"]["Domain"] = ".global.hoymiles.com"
 
     def get_credentials(self) -> Tuple[str, str]:
