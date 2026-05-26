@@ -1,24 +1,42 @@
 from __future__ import annotations
 
-from datetime import datetime, date
-from typing import Optional
+from datetime import datetime
 
 from pydantic import BaseModel
+
+
+class DataCountStationV3(BaseModel):
+    status: int
+    message: str
+    data: DataDictv3
+    systemNotice: str | None = None
+
+
+class DataDictv3(BaseModel):
+    plant_id: int
+    real_power: float
+    today_eq: float
+    month_eq: float
+    year_eq: float | None = None
+    total_eq: float
+    co2_emission: float
+    tree_planted: float
+    data_time: str
 
 
 class DataCountStation(BaseModel):
     status: int
     message: str
     data: DataDict
-    systemNotice: Optional[str] = None
+    systemNotice: str | None = None
 
 
 class DataDict(BaseModel):
     today_eq: float
     month_eq: int
-    year_eq: Optional[int] = None
+    year_eq: int | None = None
     total_eq: int
-    real_power: Optional[float] = None
+    real_power: float | None = None
     co2_emission_reduction: float
     plant_tree: int
     data_time: datetime
@@ -26,12 +44,12 @@ class DataDict(BaseModel):
     capacitor: float
     is_balance: int
     is_reflux: int
-    reflux_station_data: Optional[RefluxDataDict] = None
+    reflux_station_data: RefluxDataDict | None = None
 
 
 class RefluxDataDict(BaseModel):
-    start_date: Optional[datetime | str] = ""
-    end_date: Optional[datetime | str] = ""
+    start_date: datetime | str | None = ""
+    end_date: datetime | str | None = ""
 
     pv_power: float
     grid_power: float

@@ -1,0 +1,17 @@
+{
+  "status": "0",
+  "message": "Success",
+  "data": {
+    "list": [
+      {
+        "id": 1111111,
+        "station_name": "My Solar Plant",
+        "capacity": 800.0,
+        "status": 1,
+        "location": "Germany",
+        "timezone": "Europe/Berlin"
+      }
+    ],
+    "total": 1
+  }
+}

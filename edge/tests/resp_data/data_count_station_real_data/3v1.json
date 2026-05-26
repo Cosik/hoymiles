@@ -1,0 +1,17 @@
+{
+  "status": "0",
+  "message": "Success",
+  "data": {
+    "plant_id": 1111111,
+    "real_power": 450.5,
+    "today_eq": 2.15,
+    "month_eq": 45.2,
+    "year_eq": 210.5,
+    "total_eq": 550.8,
+    "co2_emission": 120.5,
+    "tree_planted": 6.5,
+    "data_time": "2026-05-18 08:15:00"
+  }
+}
+
+

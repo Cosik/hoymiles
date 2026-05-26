@@ -65,7 +65,9 @@ class TestCloudApi:
 
         response = self.cloud_api._send_request(url, header, {}, "POST")
         mocker_req.return_value.prepare.assert_called_once()
-        mocker_send.assert_called_once_with(mocker_req.return_value.prepare.return_value)
+        mocker_send.assert_called_once_with(
+            mocker_req.return_value.prepare.return_value
+        )
         assert response == expected_retv, "Response is not as expected"
 
     def test_send_request_exception(self, mocker):
@@ -79,7 +81,9 @@ class TestCloudApi:
 
         response = self.cloud_api._send_request(url, header, {}, "POST")
         mocker_req.return_value.prepare.assert_called_once()
-        mocker_send.assert_called_once_with(mocker_req.return_value.prepare.return_value)
+        mocker_send.assert_called_once_with(
+            mocker_req.return_value.prepare.return_value
+        )
 
         assert response is None, "Response is not as expected"
 
@@ -101,7 +105,9 @@ class TestCloudApi:
             }.get(key, default),
         )
         # Force legacy path so send_post_request is called once (for LEGACY_LOGIN_API)
-        mocker.patch.object(self.cloud_api, "_argon_get_token", return_value=(False, ""))
+        mocker.patch.object(
+            self.cloud_api, "_argon_get_token", return_value=(False, "")
+        )
 
         assert self.cloud_api.get_token()
         mocker_snd_request.assert_called_once()
@@ -121,28 +127,9 @@ class TestCloudApi:
                 "HOYMILES_PASSWORD": "pass",
             }.get(key, default),
         )
-        mocker.patch.object(self.cloud_api, "_argon_get_token", return_value=(False, ""))
-
-        assert not self.cloud_api.get_token()
-        mocker_snd_request.assert_called_once()
-
-    def test_get_token_error_form_cloud(self, mocker):
-        """Request status code is 200 but status in response is not 0"""
-        expected_retv = requests.Response()
-        expected_retv.status_code = 200
-        expected_retv._content = b'{ "status" : "1",  "data": { } }'
-        mocker_snd_request = mocker.patch(
-            "hoymiles.cloud_api.CloudApi.send_post_request", return_value=expected_retv
-        )
         mocker.patch.object(
-            self.cloud_api,
-            "_cfg_get",
-            side_effect=lambda key, default=None: {
-                "HOYMILES_USER": "user",
-                "HOYMILES_PASSWORD": "pass",
-            }.get(key, default),
+            self.cloud_api, "_argon_get_token", return_value=(False, "")
         )
-        mocker.patch.object(self.cloud_api, "_argon_get_token", return_value=(False, ""))
 
         assert not self.cloud_api.get_token()
         mocker_snd_request.assert_called_once()

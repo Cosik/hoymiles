@@ -1,0 +1,35 @@
+{
+  "status": "0",
+  "message": "Success",
+  "data": {
+    "list": [
+      {
+        "id": 3333333,
+        "sn": "114222222222",
+        "dtu_sn": "114111111111",
+        "station_id": 1111111,
+        "grid_voltage": 230.5,
+        "grid_freq": 50.0,
+        "temperature": 35.2,
+        "status": 1,
+        "port_data": [
+          {
+            "port": 1,
+            "pv_voltage": 32.5,
+            "pv_current": 5.2,
+            "pv_power": 169.0,
+            "today_eq": 0.85
+          },
+          {
+            "port": 2,
+            "pv_voltage": 33.1,
+            "pv_current": 5.1,
+            "pv_power": 168.8,
+            "today_eq": 0.84
+          }
+        ]
+      }
+    ],
+    "total": 1
+  }
+}
