@@ -7,7 +7,9 @@ from hoymiles.devices import BMS, Dtu, Micros, PlantObject
 
 file_list = [("1.json"), ("2.json"), ("3.json"), ("3v1.json")]
 
-base_path = os.path.join("edge", "tests", "resp_data", "station_select_device_of_tree")
+base_path = os.path.join(
+    os.path.dirname(__file__), "resp_data", "station_select_device_of_tree"
+)
 
 
 class TestPlantObject:

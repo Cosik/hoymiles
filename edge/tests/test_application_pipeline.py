@@ -4,7 +4,9 @@ import pytest
 import yaml
 
 # Path to response data files, relative to the project root
-BASE_PATH = os.path.join("edge", "tests", "resp_data", "data_count_station_real_data")
+BASE_PATH = os.path.join(
+    os.path.dirname(__file__), "resp_data", "data_count_station_real_data"
+)
 
 
 class TestApplicationPipeline:

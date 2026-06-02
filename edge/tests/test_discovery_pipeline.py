@@ -4,7 +4,9 @@ import pytest
 import yaml
 
 # Path to response data files for device tree, relative to project root
-BASE_PATH = os.path.join("edge", "tests", "resp_data", "station_select_device_of_tree")
+BASE_PATH = os.path.join(
+    os.path.dirname(__file__), "resp_data", "station_select_device_of_tree"
+)
 
 
 class TestDiscoveryPipeline:

@@ -7,7 +7,7 @@ from hoymiles.api_schema.data_find import DataFind
 from hoymiles.api_schema.station_find import StationFind
 from hoymiles.api_schema.station_select_device_of_tree import DeviceTree
 
-base_path = os.path.join("edge", "tests", "resp_data")
+base_path = os.path.join(os.path.dirname(__file__), "resp_data")
 
 
 class TestSchema:
@@ -24,9 +24,6 @@ class TestSchema:
         with open(file_path, "r") as file:
             data = yaml.safe_load(file)
             StationFind.model_validate(dict(data))
-
-
-
 
     @pytest.mark.parametrize(
         "file_name",

@@ -5,7 +5,7 @@ import requests
 import yaml
 
 # Paths to response data
-RESP_BASE = os.path.join("edge", "tests", "resp_data")
+RESP_BASE = os.path.join(os.path.dirname(__file__), "resp_data")
 HW_BASE = os.path.join(RESP_BASE, "station_select_device_of_tree")
 SOLAR_BASE = os.path.join(RESP_BASE, "data_count_station_real_data")
 MICRO_BASE = os.path.join(RESP_BASE, "data_find_details")

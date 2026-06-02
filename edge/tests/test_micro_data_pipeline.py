@@ -5,7 +5,7 @@ import requests
 import yaml
 
 # Path to response data files for micro inverter details, relative to project root
-BASE_PATH = os.path.join("edge", "tests", "resp_data", "data_find_details")
+BASE_PATH = os.path.join(os.path.dirname(__file__), "resp_data", "data_find_details")
 
 
 class TestMicroDataPipeline:
