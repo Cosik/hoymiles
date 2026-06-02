@@ -68,3 +68,11 @@ class TestMicroDataPipeline:
         if not warn_list:
             assert payload["alarm_code"] == 0
             assert payload["alarm_string"] == ""
+
+    def test_extract_micro_alarm_fallback(self, app_instance):
+        """Test fallback logic when JSON validation fails or data is invalid."""
+        # Invalid structure that should trigger the fallback
+        invalid_data = {"data": {"net_state": 1}} 
+        payload = app_instance._extract_micro_alarm_payload(invalid_data)
+        assert payload["connect"] is True
+        assert payload["alarm_code"] == 0

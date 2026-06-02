@@ -57,3 +57,12 @@ class TestApplicationPipeline:
                 f"Value for key '{key}' should not be None after pipeline execution"
             )
             assert value != "", f"Value for key '{key}' should not be an empty string"
+
+    def test_extract_bms_payload(self, app_instance):
+        """Test BMS data extraction from solar response."""
+        solar_data = {"reflux_station_data": {"bms_soc": 45, "bms_power": 1}}
+        payload = app_instance._extract_bms_payload_from_solar_data(solar_data)
+        assert payload["reserve_soc"] == 45
+        assert payload["connect"] is True
+
+        assert app_instance._extract_bms_payload_from_solar_data({}) == {}
