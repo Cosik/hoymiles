@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
 
 from pydantic import BaseModel
 
@@ -9,8 +8,22 @@ from pydantic import BaseModel
 class StationFind(BaseModel):
     status: int
     message: str
-    data: DataDict
-    systemNotice: Optional[str] = None
+    data: DataDict | DataListV3
+    systemNotice: str | None = None
+
+
+class DataListV3(BaseModel):
+    list: list[DataDictV3]
+    total: int
+
+
+class DataDictV3(BaseModel):
+    id: int
+    station_name: str
+    capacity: float
+    status: int
+    location: str
+    timezone: str
 
 
 class DataDict(BaseModel):
@@ -38,7 +51,7 @@ class DataDict(BaseModel):
     electricity_price: float
     in_price: float
     usd: str
-    nk_name: Optional[str] = None
+    nk_name: str | None = None
     int5m: int
     city_id: int
     weather_of_cid: int

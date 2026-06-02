@@ -156,11 +156,15 @@ class HASSMQTTPublisher:
         self.logger.debug(
             f"Creating device info for {device_id} with type {device_type}, device_name {device_name}, and additional info {device_info}"
         )
+
+        # Ensure 'model' isn't passed twice to DeviceInfo if it exists in device_info
+        model = device_info.pop("model", device_type) if device_info else device_type
+
         device = DeviceInfo(
             name=device_name,
             identifiers=f"hoymiles_{device_id}",
             manufacturer=manufacturer,
-            model=device_type,
+            model=model,
             **device_info,
         )
 

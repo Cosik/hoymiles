@@ -25,6 +25,9 @@ class TestSchema:
             data = yaml.safe_load(file)
             StationFind.model_validate(dict(data))
 
+
+
+
     @pytest.mark.parametrize(
         "file_name",
         [("1.json"), ("2.json"), ("3.json"), ("4.json"), ("5.json"), ("3v1.json")],
@@ -39,6 +42,9 @@ class TestSchema:
         with open(file_path, "r") as file:
             data = yaml.safe_load(file)
             DataCountStation.model_validate(dict(data))
+            asd = DataCountStation.model_validate(dict(data))
+            print(type(asd))
+            print(type(asd.data))
 
     @pytest.mark.parametrize("file_name", [("1.json"), ("2.json")])
     def test_data_find_schema(self, file_name: str):

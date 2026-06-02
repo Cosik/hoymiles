@@ -104,15 +104,15 @@ class HoymilesApplication:
         pipeline.add_transformer(
             CalculatedFieldTransformer(
                 {
-                    "real_power_kw": lambda d: int(d.get("real_power", 0)) / 1000,
-                    "array_size_kW": lambda d: int(d.get("array_size", 0)) / 1000,
+                    "real_power_kw": lambda d: float(d.get("real_power") or 0) / 1000,
+                    "array_size_kW": lambda d: int(d.get("array_size") or 0) / 1000,
                 }
             )
         )
 
         pipeline.add_transformer(
             RoundTransformer(
-                {
+                round_map={
                     "real_power_kw": 3,
                     "array_size_kW": 3,
                     "co2_emission_reduction": 5,
@@ -241,56 +241,71 @@ class HoymilesApplication:
                     device_info={"firmware_version": "1.0"},
                 )
 
-                # Parse and publish DTU/Micro/BMS discovery
-                for device in devices_data:
-                    if device.get("type") == 1:  # DTU
-                        dtu = Dtu(DevicedDict.model_validate(device))
-                        self.mqtt_publisher.publish_discovery(
-                            device_type="dtu",
-                            device_id=dtu.id,
-                            device_name=f"DTU {dtu.id}",
-                            sensors=self.sensor_registry.get_sensors("dtu"),
-                            device_info={
-                                "model_no": dtu.model_no,
-                                "firmware_version": dtu.soft_ver,
-                            },
-                        )
-
-                    for child in device.get("children", []):
-                        if child.get("type") in (3, 6):  # Micro/Hybrid inverter
-                            micro = Micros(DevicedDict.model_validate(child))
-                            discovered_micro_ids.add(str(micro.id))
-                            self.mqtt_publisher.publish_discovery(
-                                device_type="micro",
-                                device_id=micro.id,
-                                device_name=f"Inverter {micro.id}",
-                                sensors=self.sensor_registry.get_sensors("micro"),
-                                device_info={
-                                    "model_no": micro.init_hard_no,
-                                    "firmware_version": micro.soft_ver,
-                                },
-                            )
-
-                        for bms_child in child.get("children", []):
-                            if bms_child.get("type") == 10:  # BMS
-                                bms = BMS(DevicedDict.model_validate(bms_child))
-                                discovered_bms_ids.add(str(bms.id))
-                                self.mqtt_publisher.publish_discovery(
-                                    device_type="bms",
-                                    device_id=bms.id,
-                                    device_name=f"Battery {bms.id}",
-                                    sensors=self.sensor_registry.get_sensors("bms"),
-                                    device_info={
-                                        "model": bms.model,
-                                        "firmware_version": bms.soft_ver,
-                                    },
-                                )
+                self._parse_device_tree_recursive(
+                    devices_data, discovered_micro_ids, discovered_bms_ids, publish=True
+                )
 
                 self.micro_ids_by_plant[str(plant_id)] = discovered_micro_ids
                 self.bms_ids_by_plant[str(plant_id)] = discovered_bms_ids
 
             except Exception:
                 self.logger.exception("Error publishing discovery:")
+
+    def _parse_device_tree_recursive(
+        self, devices: list[dict], micro_ids: set[str], bms_ids: set[str], publish: bool
+    ) -> None:
+        """Recursive helper to parse the device tree."""
+        is_v3 = self.cloud_api.api_version == "3"
+        dtu_type = 2 if is_v3 else 1
+
+        for device in devices:
+            dev_type = device.get("type")
+
+            if dev_type == dtu_type:
+                dtu = Dtu(DevicedDict.model_validate(device))
+                if publish:
+                    self.mqtt_publisher.publish_discovery(
+                        device_type="dtu",
+                        device_id=dtu.id,
+                        device_name=f"DTU {dtu.id}",
+                        sensors=self.sensor_registry.get_sensors("dtu"),
+                        device_info={
+                            "model_no": dtu.model_no,
+                            "firmware_version": dtu.soft_ver,
+                        },
+                    )
+            elif dev_type in (3, 6):
+                micro = Micros(DevicedDict.model_validate(device))
+                micro_ids.add(str(micro.id))
+                if publish:
+                    self.mqtt_publisher.publish_discovery(
+                        device_type="micro",
+                        device_id=micro.id,
+                        device_name=f"Inverter {micro.id}",
+                        sensors=self.sensor_registry.get_sensors("micro"),
+                        device_info={
+                            "model_no": micro.init_hard_no,
+                            "firmware_version": micro.soft_ver,
+                        },
+                    )
+            elif dev_type == 10:
+                bms = BMS(DevicedDict.model_validate(device))
+                bms_ids.add(str(bms.id))
+                if publish:
+                    self.mqtt_publisher.publish_discovery(
+                        device_type="bms",
+                        device_id=bms.id,
+                        device_name=f"Battery {bms.id}",
+                        sensors=self.sensor_registry.get_sensors("bms"),
+                        device_info={
+                            "model": bms.model,
+                            "firmware_version": bms.soft_ver,
+                        },
+                    )
+
+            children = device.get("children", [])
+            if children:
+                self._parse_device_tree_recursive(children, micro_ids, bms_ids, publish)
 
     def _get_micro_ids_for_plant(self, plant_id: str) -> list[str]:
         """Get cached micro IDs and refresh from API if cache is empty."""
@@ -303,12 +318,14 @@ class HoymilesApplication:
             return []
 
         discovered_micro_ids: set[str] = set()
-        for device in devices_data:
-            for child in device.get("children", []):
-                if child.get("type") in (3, 6) and child.get("id") is not None:
-                    discovered_micro_ids.add(str(child.get("id")))
+        discovered_bms_ids: set[str] = set()
+
+        self._parse_device_tree_recursive(
+            devices_data, discovered_micro_ids, discovered_bms_ids, publish=False
+        )
 
         self.micro_ids_by_plant[str(plant_id)] = discovered_micro_ids
+        self.bms_ids_by_plant[str(plant_id)] = discovered_bms_ids
         return sorted(discovered_micro_ids)
 
     def _extract_micro_alarm_payload(
@@ -337,13 +354,17 @@ class HoymilesApplication:
         alarm_string = ""
         if data.warn_list and len(data.warn_list) > 0:
             first_warn = data.warn_list[0]
-            alarm_code = first_warn.err_code
-            alarm_parts = [
-                (first_warn.wd1 or "").strip(),
-                (first_warn.wdd1 or "").strip(),
-                (first_warn.wdd2 or "").strip(),
-                (first_warn.wd2 or "").strip(),
-            ]
+            alarm_code = first_warn.get("err_code")
+            alarm_parts = (
+                [
+                    first_warn.get("wd1", "").strip(),
+                    first_warn.get("wdd1", "").strip(),
+                    first_warn.get("wdd2", "").strip(),
+                    first_warn.get("wd2", "").strip(),
+                ]
+                if first_warn
+                else []
+            )
             alarm_string = " ".join(
                 [part for part in alarm_parts if part and part != "-"]
             )
@@ -374,6 +395,34 @@ class HoymilesApplication:
             "connect": bool(reflux_data.get("bms_power", 0)),
         }
 
+    def _fetch_and_publish_micro_data(self, plant_id: str) -> None:
+        for micro_id in self._get_micro_ids_for_plant(plant_id):
+            micro_resp = self.cloud_api.request_micro_details(micro_id)
+            if not micro_resp:
+                continue
+
+            try:
+                micro_details = micro_resp.json()
+            except ValueError:
+                self.logger.debug(
+                    "Invalid JSON in micro details response for %s", micro_id
+                )
+                continue
+
+            if micro_details.get("status") != "0":
+                self.logger.debug(
+                    "Micro details status is not success for %s: %s",
+                    micro_id,
+                    micro_details.get("status"),
+                )
+                continue
+
+            alarm_payload = self._extract_micro_alarm_payload(micro_details)
+            self.mqtt_publisher.publish_data(
+                device_id=str(micro_id),
+                data=alarm_payload,
+            )
+
     def _fetch_and_publish_data(self) -> None:
         """Fetch data from Hoymiles API and publish to MQTT."""
         self.logger.info("Fetching and publishing data")
@@ -398,32 +447,8 @@ class HoymilesApplication:
                 )
 
                 # Publish per-inverter alarm/connectivity data.
-                for micro_id in self._get_micro_ids_for_plant(plant_id):
-                    micro_resp = self.cloud_api.request_micro_details(micro_id)
-                    if not micro_resp:
-                        continue
 
-                    try:
-                        micro_details = micro_resp.json()
-                    except ValueError:
-                        self.logger.debug(
-                            "Invalid JSON in micro details response for %s", micro_id
-                        )
-                        continue
-
-                    if micro_details.get("status") != "0":
-                        self.logger.debug(
-                            "Micro details status is not success for %s: %s",
-                            micro_id,
-                            micro_details.get("status"),
-                        )
-                        continue
-
-                    alarm_payload = self._extract_micro_alarm_payload(micro_details)
-                    self.mqtt_publisher.publish_data(
-                        device_id=str(micro_id),
-                        data=alarm_payload,
-                    )
+                self._fetch_and_publish_micro_data(plant_id)
 
                 # Publish per-BMS data if READ_METER_DATA is enabled.
                 if self.config.get_bool("READ_METER_DATA", True):

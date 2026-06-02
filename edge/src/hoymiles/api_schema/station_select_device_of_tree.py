@@ -12,14 +12,15 @@ class DeviceTree(BaseModel):
 
 class DevicedDict(BaseModel):
     id: int
-    sn: str
+    sn: str | int | None = None
+    text: str | None = None
 
-    dtu_sn: str
+    dtu_sn: str | int | None = None
     type: int
-    model_no: str
-    soft_ver: str
-    hard_ver: str
-    warn_data: WarnDict | dict | None = {}
+    model_no: str | int | None = None
+    soft_ver: str | None = None
+    hard_ver: str | None = None
+    warn_data: WarnDict | dict | None = None
     children: list[DevicedDict] | None = []
 
 

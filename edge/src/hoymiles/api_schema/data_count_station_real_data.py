@@ -12,6 +12,13 @@ class DataCountStationV3(BaseModel):
     systemNotice: str | None = None
 
 
+class DataCountStation(BaseModel):
+    status: int
+    message: str
+    data: DataDict | DataDictv3
+    systemNotice: str | None = None
+
+
 class DataDictv3(BaseModel):
     plant_id: int
     real_power: float
@@ -22,13 +29,6 @@ class DataDictv3(BaseModel):
     co2_emission: float
     tree_planted: float
     data_time: str
-
-
-class DataCountStation(BaseModel):
-    status: int
-    message: str
-    data: DataDict
-    systemNotice: str | None = None
 
 
 class DataDict(BaseModel):
