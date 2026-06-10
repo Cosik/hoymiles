@@ -577,11 +577,17 @@ class CloudApi:
 
         return data.get("status") == "0"
 
-    def request_micro_details(self, micro_id: str | int) -> requests.Response:
+    def request_micro_details(
+        self, micro_id: str | int, plant_id: str
+    ) -> requests.Response:
         """Request micro-inverter details/alarm info."""
+        if self.api_version == "3":
+            payload = {"station_id": int(plant_id)}
+        else:
+            payload = {"id": micro_id}
         return self._post_with_auth_retry(
             self._versioned_api_url(DATA_FIND_DETAILS_API_V),
-            {"id": micro_id},
+            payload,
         )
 
     def set_bms_mode(

@@ -397,7 +397,7 @@ class HoymilesApplication:
 
     def _fetch_and_publish_micro_data(self, plant_id: str) -> None:
         for micro_id in self._get_micro_ids_for_plant(plant_id):
-            micro_resp = self.cloud_api.request_micro_details(micro_id)
+            micro_resp = self.cloud_api.request_micro_details(micro_id, plant_id)
             if not micro_resp:
                 continue
 
