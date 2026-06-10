@@ -509,7 +509,10 @@ class CloudApi:
         :rtype: requests.Response
         """
 
-        payload = {"sid": plant_id}
+        if self.api_version == "3":
+            payload = {"station_id": int(plant_id)}
+        else:
+            payload = {"sid": plant_id}
 
         if self.estar_mode and not self._cfg_get("EXPERIMENTAL_CUSTOM_API_URLS", False):
             # Keep old endpoint for ESTAR compatibility.
@@ -525,7 +528,10 @@ class CloudApi:
 
     def request_plant_hw(self, plant_id: str) -> requests.Response:
         """Request hardware/device tree for a plant."""
-        payload = {"id": plant_id}
+        if self.api_version == "3":
+            payload = {"station_id": int(plant_id)}
+        else:
+            payload = {"id": plant_id}
         return self._post_with_auth_retry(
             self._versioned_api_url(GET_ALL_DEVICE_API_V),
             payload,
