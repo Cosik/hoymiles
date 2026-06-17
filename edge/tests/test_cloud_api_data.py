@@ -5,7 +5,7 @@ import requests
 import yaml
 from hoymiles.api_schema.data_count_station_real_data import (
     DataCountStation,
-    DataCountStationV3,
+    DataCountStationV1,
 )
 from hoymiles.cloud_api import CloudApi
 
@@ -88,7 +88,7 @@ class TestCloudApiSolarData:
 
         result = self.cloud_api.get_solar_data(plant_id)
 
-        expected_data = DataCountStationV3.model_validate(
+        expected_data = DataCountStationV1.model_validate(
             mock_solar_data_payload
         ).data.model_dump()
         assert result == expected_data

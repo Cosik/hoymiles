@@ -47,7 +47,7 @@ class TestDiscoveryPipeline:
         # 2b. If file name contains '3v1', simulate API V3 behavior
         is_v3 = "3v" in file_name
         if is_v3:
-            app_instance.cloud_api.api_version = "3"
+            app_instance.cloud_api.api_version = "1"
 
         # 3. Mock MQTT publisher's publish_discovery method to capture calls
         spy_discovery = mocker.spy(app_instance.mqtt_publisher, "publish_discovery")

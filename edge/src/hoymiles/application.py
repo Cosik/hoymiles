@@ -255,8 +255,8 @@ class HoymilesApplication:
         self, devices: list[dict], micro_ids: set[str], bms_ids: set[str], publish: bool
     ) -> None:
         """Recursive helper to parse the device tree."""
-        is_v3 = self.cloud_api.api_version == "3"
-        dtu_type = 2 if is_v3 else 1
+        is_v1 = self.cloud_api.api_version == "1"
+        dtu_type = 2 if is_v1 else 1
 
         for device in devices:
             dev_type = device.get("type")

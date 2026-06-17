@@ -5,21 +5,21 @@ from datetime import datetime
 from pydantic import BaseModel
 
 
-class DataCountStationV3(BaseModel):
+class DataCountStationV1(BaseModel):
     status: int
     message: str
-    data: DataDictv3
+    data: DataDictv1
     systemNotice: str | None = None
 
 
 class DataCountStation(BaseModel):
     status: int
     message: str
-    data: DataDict | DataDictv3
+    data: DataDict | DataDictv1
     systemNotice: str | None = None
 
 
-class DataDictv3(BaseModel):
+class DataDictv1(BaseModel):
     plant_id: int
     real_power: float
     today_eq: float

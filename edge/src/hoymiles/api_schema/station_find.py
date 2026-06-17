@@ -8,16 +8,16 @@ from pydantic import BaseModel
 class StationFind(BaseModel):
     status: int
     message: str
-    data: DataDict | DataListV3
+    data: DataDict | DataListV1
     systemNotice: str | None = None
 
 
-class DataListV3(BaseModel):
-    list: list[DataDictV3]
+class DataListV1(BaseModel):
+    list: list[DataDictV1]
     total: int
 
 
-class DataDictV3(BaseModel):
+class DataDictV1(BaseModel):
     id: int
     station_name: str
     capacity: float

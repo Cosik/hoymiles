@@ -67,7 +67,7 @@ class TestE2EHoymiles:
 
         # Set API version based on scenario (V3 changes type mappings)
         is_v3 = "3v" in scenario
-        app_instance.cloud_api.api_version = "3" if is_v3 else "0"
+        app_instance.cloud_api.api_version = "1" if is_v3 else "0"
 
         # Clear mocks to reset call history from any previous tests or init
         app_instance.mqtt_publisher.publish_discovery.reset_mock()

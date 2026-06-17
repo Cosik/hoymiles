@@ -56,13 +56,38 @@ ESTAR_BASE_URL = "https://monitor.estarpower.com/platform/api/gateway/"
 LEGACY_LOGIN_API = "iam/pub/0/auth/login"
 LEGACY_GET_DATA_API = "pvm-data/api/0/station/data/count_station_real_data"
 
+
 # Versioned API endpoints (aligned with stable/const.py semantics).
-USER_ME_API_V = "iam/pub/{version}/user/user_me"
-GET_DATA_API_V = "pvm-data/api/{version}/station/data/count_station_real_data"
-GET_ALL_DEVICE_API_V = "pvm/api/{version}/station/select_device_of_tree"
-STATION_FIND_API_V = "pvm/api/{version}/station/find"
-DATA_FIND_DETAILS_API_V = "pvm/api/{version}/dev/micro/find"
-SETTING_BATTERY_CONFIG_API_V = "pvm-ctl/api/{version}/dev/setting/write"
+# USER_ME_API_V = "iam/pub/{version}/user/user_me"
+# GET_DATA_API_V = "pvm-data/api/{version}/station/data/count_station_real_data"
+# GET_ALL_DEVICE_API_V = "pvm/api/{version}/station/select_device_of_tree"
+# STATION_FIND_API_V = "pvm/api/{version}/station/find"
+# DATA_FIND_DETAILS_API_V = "pvm/api/{version}/dev/micro/find"
+# SETTING_BATTERY_CONFIG_API_V = "pvm-ctl/api/{version}/dev/setting/write"
+
+
+ENDPOINT_DICT = {
+    "user_me": ["iam/pub/0/user/user_me"],
+    "get_data": [
+        "pvm-data/api/0/station/data/count_station_real_data",
+        "pms/v1/station/data/count",
+    ],
+    "get_all_device": [
+        "pvm/api/0/station/select_device_of_tree",
+        "pms/v1/station/device/tree",
+    ],
+    "station_find": ["pvm/api/0/station/find"],
+    "data_find_details": ["pvm/api/0/dev/micro/find", "pms/v1/device/micro/find"],
+    "setting_battery_config": ["pvm-ctl/api/0/dev/setting/write"],
+}
+
+
+def get_endpoint(lst, index):
+    try:
+        return lst[index]
+    except IndexError:
+        return lst[0] if len(lst) else ""
+
 
 ARGON_PRE_INSP_API = "iam/pub/3/auth/pre-insp"
 ARGON_LOGIN_API = "iam/pub/3/auth/login"
@@ -375,11 +400,9 @@ class CloudApi:
         )
         return bool(token), token
 
-    def _versioned_api_url(self, path_template: str) -> str:
+    def _versioned_api_url(self, endpoint_type: list[str]) -> str:
         """Build neapi URL using the currently selected cloud API version."""
-        return (
-            f"{self.versioned_base_url}{path_template.format(version=self.api_version)}"
-        )
+        return get_endpoint(endpoint_type, int(self.api_version))
 
     def _post_with_auth_retry(self, url: str, payload: dict) -> requests.Response:
         """POST with auth token and one retry on token-expired status."""
@@ -442,7 +465,7 @@ class CloudApi:
                 self.api_version = "0"
                 self.token_method = "legacy"
         else:
-            self.api_version = "3"
+            self.api_version = "1"
             self.token_method = "argon"
 
         if not status or not token:
@@ -509,7 +532,7 @@ class CloudApi:
         :rtype: requests.Response
         """
 
-        if self.api_version == "3":
+        if self.api_version == "1":
             payload = {"station_id": int(plant_id)}
         else:
             payload = {"sid": plant_id}
@@ -522,18 +545,18 @@ class CloudApi:
             )
 
         return self._post_with_auth_retry(
-            self._versioned_api_url(GET_DATA_API_V),
+            self._versioned_api_url(ENDPOINT_DICT.get("get_data", [])),
             payload,
         )
 
     def request_plant_hw(self, plant_id: str) -> requests.Response:
         """Request hardware/device tree for a plant."""
-        if self.api_version == "3":
+        if self.api_version == "1":
             payload = {"station_id": int(plant_id)}
         else:
             payload = {"id": plant_id}
         return self._post_with_auth_retry(
-            self._versioned_api_url(GET_ALL_DEVICE_API_V),
+            self._versioned_api_url(ENDPOINT_DICT.get("get_all_device", [])),
             payload,
         )
 
@@ -564,7 +587,7 @@ class CloudApi:
             return False
 
         resp = self._post_with_auth_retry(
-            self._versioned_api_url(STATION_FIND_API_V),
+            self._versioned_api_url(ENDPOINT_DICT.get("station_find", [])),
             {"id": plant_id},
         )
         if not resp:
@@ -581,12 +604,12 @@ class CloudApi:
         self, micro_id: str | int, plant_id: str
     ) -> requests.Response:
         """Request micro-inverter details/alarm info."""
-        if self.api_version == "3":
+        if self.api_version == "1":
             payload = {"station_id": int(plant_id)}
         else:
             payload = {"id": micro_id}
         return self._post_with_auth_retry(
-            self._versioned_api_url(DATA_FIND_DETAILS_API_V),
+            self._versioned_api_url(ENDPOINT_DICT.get("data_find_details", [])),
             payload,
         )
 
@@ -603,7 +626,7 @@ class CloudApi:
             payload["data"]["max_power"] = max_power
 
         resp = self._post_with_auth_retry(
-            self._versioned_api_url(SETTING_BATTERY_CONFIG_API_V),
+            self._versioned_api_url(ENDPOINT_DICT.get("setting_battery_config", [])),
             payload,
         )
         if not resp:
